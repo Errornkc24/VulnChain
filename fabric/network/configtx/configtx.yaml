@@ -1,0 +1,195 @@
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: ../organizations/ordererOrganizations/orderer.cve.local/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer0.orderer.cve.local:7050
+
+  - &CNAAlpha
+    Name: CNAAlphaMSP
+    ID: CNAAlphaMSP
+    MSPDir: ../organizations/peerOrganizations/cna-alpha.cve.local/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CNAAlphaMSP.admin', 'CNAAlphaMSP.peer', 'CNAAlphaMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CNAAlphaMSP.admin', 'CNAAlphaMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CNAAlphaMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CNAAlphaMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.cna-alpha.cve.local
+        Port: 7051
+
+  - &CNABeta
+    Name: CNABetaMSP
+    ID: CNABetaMSP
+    MSPDir: ../organizations/peerOrganizations/cna-beta.cve.local/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('CNABetaMSP.admin', 'CNABetaMSP.peer', 'CNABetaMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('CNABetaMSP.admin', 'CNABetaMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('CNABetaMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('CNABetaMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.cna-beta.cve.local
+        Port: 9051
+
+  - &Regulator
+    Name: RegulatorMSP
+    ID: RegulatorMSP
+    MSPDir: ../organizations/peerOrganizations/regulator.cve.local/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('RegulatorMSP.admin', 'RegulatorMSP.peer', 'RegulatorMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('RegulatorMSP.admin', 'RegulatorMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('RegulatorMSP.admin')"
+      Endorsement:
+        Type: Signature
+        Rule: "OR('RegulatorMSP.peer')"
+    AnchorPeers:
+      - Host: peer0.regulator.cve.local
+        Port: 11051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer0.orderer.cve.local:7050
+  EtcdRaft:
+    Consenters:
+      - Host: orderer0.orderer.cve.local
+        Port: 7050
+        ClientTLSCert: ../organizations/ordererOrganizations/orderer.cve.local/orderers/orderer0.orderer.cve.local/tls/server.crt
+        ServerTLSCert: ../organizations/ordererOrganizations/orderer.cve.local/orderers/orderer0.orderer.cve.local/tls/server.crt
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  CVEOrdererGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CNAAlpha
+        - *CNABeta
+        - *Regulator
+
+  CVEPublicChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CNAAlpha
+        - *CNABeta
+        - *Regulator
+
+  CVEConsortiumChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CNAAlpha
+        - *CNABeta
+        - *Regulator

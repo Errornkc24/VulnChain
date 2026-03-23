@@ -1,0 +1,32 @@
+# Bevel fabric-channel-create chart — cveconsortium channel
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    network: fabric
+    address: ""
+    authPath: cna-alpha
+    secretEngine: secretsv2
+    secretPrefix: "data/cna-alpha"
+    tls: false
+
+image:
+  fabricTools: ghcr.io/hyperledger/bevel-fabric-tools
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  pullSecret:
+
+peer:
+  name: peer0
+  address: peer0-cna-alpha.cna-alpha-ns:7051
+  localMspId: CNAAlphaMSP
+  logLevel: debug
+  tlsStatus: true
+  ordererAddress: orderer0.orderer-ns:7050
+
+channel:
+  name: cveconsortium

@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+frontend/dist/
+dashboard/
+
+# Environment & secrets
+.env
+backend/.env
+backend/data/users.db
+backend/data/users.db-shm
+backend/data/users.db-wal
+backend/demo-credentials.txt
+
+# Wallet credentials (generated per deploy)
+backend/wallet/*.pem
+backend/wallet/*-config.json
+
+# Fabric generated artifacts
+fabric/network/organizations/peerOrganizations/
+fabric/network/organizations/ordererOrganizations/
+fabric/network/channel-artifacts/
+fabric/network/system-genesis-block/
+fabric/bevel/repo/
+fabric/chaincode/cve/vendor/
+fabric/chaincode/cve/chaincode
+fabric/bin/
+
+# Minikube / K8s
+*.kubeconfig
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Claude Code
+.claude/
+
+# Misc
+*.tar.gz
+/tmp/

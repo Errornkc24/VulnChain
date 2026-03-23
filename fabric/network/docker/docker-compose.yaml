@@ -1,0 +1,257 @@
+version: '3.7'
+
+volumes:
+  orderer0.orderer.cve.local:
+  peer0.cna-alpha.cve.local:
+  peer0.cna-beta.cve.local:
+  peer0.regulator.cve.local:
+
+networks:
+  cve-network:
+    name: cve-network
+
+services:
+  # ============ ORDERER ============
+  orderer0.orderer.cve.local:
+    container_name: orderer0.orderer.cve.local
+    image: hyperledger/fabric-orderer:2.4
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+    working_dir: /root
+    command: orderer
+    volumes:
+      - ../system-genesis-block/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+      - ../organizations/ordererOrganizations/orderer.cve.local/orderers/orderer0.orderer.cve.local/msp:/var/hyperledger/orderer/msp
+      - ../organizations/ordererOrganizations/orderer.cve.local/orderers/orderer0.orderer.cve.local/tls:/var/hyperledger/orderer/tls
+      - orderer0.orderer.cve.local:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+      - 7053:7053
+    networks:
+      - cve-network
+
+  # ============ CNA-ALPHA PEER ============
+  couchdb0.cna-alpha:
+    container_name: couchdb0.cna-alpha
+    image: couchdb:3.3
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - COUCHDB_USER=cnaalphaadmin
+      - COUCHDB_PASSWORD=cnaalphaadminpw
+    ports:
+      - 5984:5984
+    networks:
+      - cve-network
+
+  peer0.cna-alpha.cve.local:
+    container_name: peer0.cna-alpha.cve.local
+    image: hyperledger/fabric-peer:2.4
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=cve-network
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.cna-alpha.cve.local
+      - CORE_PEER_ADDRESS=peer0.cna-alpha.cve.local:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.cna-alpha.cve.local:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.cna-alpha.cve.local:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.cna-alpha.cve.local:7051
+      - CORE_PEER_LOCALMSPID=CNAAlphaMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.cna-alpha:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=cnaalphaadmin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=cnaalphaadminpw
+    working_dir: /root
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/cna-alpha.cve.local/peers/peer0.cna-alpha.cve.local:/etc/hyperledger/fabric
+      - peer0.cna-alpha.cve.local:/var/hyperledger/production
+    ports:
+      - 7051:7051
+    depends_on:
+      - couchdb0.cna-alpha
+    networks:
+      - cve-network
+
+  # ============ CNA-BETA PEER ============
+  couchdb0.cna-beta:
+    container_name: couchdb0.cna-beta
+    image: couchdb:3.3
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - COUCHDB_USER=cnabetaadmin
+      - COUCHDB_PASSWORD=cnabetaadminpw
+    ports:
+      - 7984:5984
+    networks:
+      - cve-network
+
+  peer0.cna-beta.cve.local:
+    container_name: peer0.cna-beta.cve.local
+    image: hyperledger/fabric-peer:2.4
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=cve-network
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.cna-beta.cve.local
+      - CORE_PEER_ADDRESS=peer0.cna-beta.cve.local:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.cna-beta.cve.local:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.cna-beta.cve.local:9051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.cna-beta.cve.local:9051
+      - CORE_PEER_LOCALMSPID=CNABetaMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.cna-beta:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=cnabetaadmin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=cnabetaadminpw
+    working_dir: /root
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/cna-beta.cve.local/peers/peer0.cna-beta.cve.local:/etc/hyperledger/fabric
+      - peer0.cna-beta.cve.local:/var/hyperledger/production
+    ports:
+      - 9051:9051
+    depends_on:
+      - couchdb0.cna-beta
+    networks:
+      - cve-network
+
+  # ============ REGULATOR PEER ============
+  couchdb0.regulator:
+    container_name: couchdb0.regulator
+    image: couchdb:3.3
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - COUCHDB_USER=regulatoradmin
+      - COUCHDB_PASSWORD=regulatoradminpw
+    ports:
+      - 9984:5984
+    networks:
+      - cve-network
+
+  peer0.regulator.cve.local:
+    container_name: peer0.regulator.cve.local
+    image: hyperledger/fabric-peer:2.4
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=cve-network
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.regulator.cve.local
+      - CORE_PEER_ADDRESS=peer0.regulator.cve.local:11051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.regulator.cve.local:11052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.regulator.cve.local:11051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.regulator.cve.local:11051
+      - CORE_PEER_LOCALMSPID=RegulatorMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.regulator:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=regulatoradmin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=regulatoradminpw
+    working_dir: /root
+    command: peer node start
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations/peerOrganizations/regulator.cve.local/peers/peer0.regulator.cve.local:/etc/hyperledger/fabric
+      - peer0.regulator.cve.local:/var/hyperledger/production
+    ports:
+      - 11051:11051
+    depends_on:
+      - couchdb0.regulator
+    networks:
+      - cve-network
+
+  # ============ FABRIC CLI ============
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:2.4
+    labels:
+      service: hyperledger-fabric
+    tty: true
+    stdin_open: true
+    environment:
+      - GOPATH=/opt/gopath
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.cna-alpha.cve.local:7051
+      - CORE_PEER_LOCALMSPID=CNAAlphaMSP
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/cna-alpha.cve.local/peers/peer0.cna-alpha.cve.local/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/cna-alpha.cve.local/peers/peer0.cna-alpha.cve.local/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/cna-alpha.cve.local/peers/peer0.cna-alpha.cve.local/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/peerOrganizations/cna-alpha.cve.local/users/Admin@cna-alpha.cve.local/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+      - ../organizations:/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations
+      - ../channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+      - ../../chaincode:/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode
+    depends_on:
+      - peer0.cna-alpha.cve.local
+      - peer0.cna-beta.cve.local
+      - peer0.regulator.cve.local
+    networks:
+      - cve-network
+
+  # ============ REDIS ============
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    networks:
+      - cve-network

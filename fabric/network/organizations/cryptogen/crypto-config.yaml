@@ -1,0 +1,58 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: orderer.cve.local
+    EnableNodeOUs: true
+    Specs:
+      - Hostname: orderer0
+        SANS:
+          - localhost
+          - orderer0.orderer.cve.local
+          - orderer0
+          - orderer0.orderer-ns
+          - orderer0.orderer-ns.svc.cluster.local
+
+PeerOrgs:
+  - Name: CNAAlpha
+    Domain: cna-alpha.cve.local
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+        - peer0.cna-alpha.cve.local
+        - peer0
+        - peer0-cna-alpha
+        - peer0-cna-alpha.cna-alpha-ns
+        - peer0-cna-alpha.cna-alpha-ns.svc.cluster.local
+    Users:
+      Count: 1
+
+  - Name: CNABeta
+    Domain: cna-beta.cve.local
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+        - peer0.cna-beta.cve.local
+        - peer0
+        - peer0-cna-beta
+        - peer0-cna-beta.cna-beta-ns
+        - peer0-cna-beta.cna-beta-ns.svc.cluster.local
+    Users:
+      Count: 1
+
+  - Name: Regulator
+    Domain: regulator.cve.local
+    EnableNodeOUs: true
+    Template:
+      Count: 1
+      SANS:
+        - localhost
+        - peer0.regulator.cve.local
+        - peer0
+        - peer0-regulator
+        - peer0-regulator.regulator-ns
+        - peer0-regulator.regulator-ns.svc.cluster.local
+    Users:
+      Count: 1

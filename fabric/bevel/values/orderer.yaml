@@ -1,0 +1,79 @@
+# Bevel fabric-orderernode chart — Orderer0
+# Source: bevel/platforms/hyperledger-fabric/charts/fabric-orderernode
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    address: ""
+    authPath: orderer
+    secretEngine: secretsv2
+    secretPrefix: "data/orderer"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+
+storage:
+  size: 512Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+certs:
+  generateCertificates: false  # We generate certs externally via cryptogen
+  orgData:
+    caAddress: ca-orderer.orderer-ns:7054
+    caAdminUser: orderer-admin
+    caAdminPassword: orderer-adminpw
+    orgName: orderer
+    type: orderer
+    componentSubject: "O=OrdererOrg,L=Ahmedabad,C=IN"
+  settings:
+    createConfigMaps: true
+    refreshCertValue: false
+    addPeerValue: false
+    removeCertsOnDelete: false
+    removeOrdererTlsOnDelete: false
+
+image:
+  orderer: ghcr.io/hyperledger/bevel-fabric-orderer
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  healthCheck: busybox
+  pullSecret:
+
+orderer:
+  consensus: raft
+  logLevel: info
+  localMspId: OrdererMSP
+  tlsStatus: true
+  keepAliveServerInterval: 10s
+  serviceType: NodePort
+  ports:
+    grpc:
+      nodeport: 30050
+      clusterIpPort: 7050
+    metrics:
+      enabled: false
+      clusterIpPort: 9443
+  resources:
+    limits:
+      memory: 512M
+      cpu: 1
+    requests:
+      memory: 256M
+      cpu: 0.25
+
+healthCheck:
+  retries: 20
+  sleepTimeAfterError: 15
+
+labels:
+  service: []
+  pvc: []
+  deployment: []

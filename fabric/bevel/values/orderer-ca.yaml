@@ -1,0 +1,46 @@
+# Bevel fabric-ca-server chart — Orderer CA
+# Source: bevel/platforms/hyperledger-fabric/charts/fabric-ca-server
+global:
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes  # Use K8s secrets directly, no HashiCorp Vault
+    role: vault-role
+    network: fabric
+    address: ""
+    authPath: orderer
+    secretEngine: secretsv2
+    secretPrefix: "data/orderer"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+
+storage:
+  size: 256Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+image:
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  ca: ghcr.io/hyperledger/bevel-fabric-ca:latest
+  pullSecret:
+
+server:
+  removeCertsOnDelete: true
+  tlsStatus: true
+  adminUsername: orderer-admin
+  adminPassword: orderer-adminpw
+  subject: "/C=IN/ST=Gujarat/L=Ahmedabad/O=OrdererOrg/CN=orderer-ca"
+  configPath: ""
+  nodePort:
+  clusterIpPort: 7054
+
+labels:
+  service: []
+  pvc: []
+  deployment: []

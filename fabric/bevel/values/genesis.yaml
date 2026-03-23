@@ -1,0 +1,67 @@
+# Bevel fabric-genesis chart
+# Source: bevel/platforms/hyperledger-fabric/charts/fabric-genesis
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    network: fabric
+    address: ""
+    authPath: orderer
+    secretEngine: secretsv2
+    secretPrefix: "data/orderer"
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+
+image:
+  fabricTools: ghcr.io/hyperledger/bevel-fabric-tools
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  pullSecret:
+
+organizations:
+  - name: orderer
+    orderers:
+      - name: orderer0
+        ordererAddress: orderer0.orderer-ns:7050
+    peers: []
+  - name: cna-alpha
+    peers:
+      - name: peer0
+        peerAddress: peer0-cna-alpha.cna-alpha-ns:7051
+  - name: cna-beta
+    peers:
+      - name: peer0
+        peerAddress: peer0-cna-beta.cna-beta-ns:9051
+  - name: regulator
+    peers:
+      - name: peer0
+        peerAddress: peer0-regulator.regulator-ns:11051
+
+consensus: raft
+
+channels:
+  - name: cvepublic
+    consortium: CVEConsortium
+    orderers:
+      - orderer
+    participants:
+      - cna-alpha
+      - cna-beta
+      - regulator
+  - name: cveconsortium
+    consortium: CVEConsortium
+    orderers:
+      - orderer
+    participants:
+      - cna-alpha
+      - cna-beta
+      - regulator
+
+settings:
+  generateGenesis: true
+  removeConfigMapOnDelete: true

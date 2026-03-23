@@ -1,0 +1,45 @@
+# Bevel fabric-ca-server chart — Regulator CA
+global:
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    network: fabric
+    address: ""
+    authPath: regulator
+    secretEngine: secretsv2
+    secretPrefix: "data/regulator"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+
+storage:
+  size: 256Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+image:
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  ca: ghcr.io/hyperledger/bevel-fabric-ca:latest
+  pullSecret:
+
+server:
+  removeCertsOnDelete: true
+  tlsStatus: true
+  adminUsername: regulator-admin
+  adminPassword: regulator-adminpw
+  subject: "/C=IN/ST=Gujarat/L=Ahmedabad/O=Regulator/CN=regulator-ca"
+  configPath: ""
+  nodePort:
+  clusterIpPort: 7054
+
+labels:
+  service: []
+  pvc: []
+  deployment: []

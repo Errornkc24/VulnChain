@@ -1,0 +1,241 @@
+---
+# Hyperledger Bevel Network Configuration
+# Decentralized CVE Management Platform
+# This file defines the complete network topology for Bevel deployment
+
+network:
+  type: fabric
+  version: 2.4.9
+  frontend: enabled
+  docker:
+    url: "index.docker.io/hyperledger"
+    username: ""
+    password: ""
+
+  # Channels
+  channels:
+    - channel:
+        channel_name: cvepublic
+        consortium: CVEConsortium
+        orderers:
+          - orderer0
+        participants:
+          - organization:
+              name: cnaalpha
+              type: creator
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.cna-alpha.cve.local:7051
+                    peerAddress: peer0.cna-alpha.cve.local:7051
+          - organization:
+              name: cnabeta
+              type: joiner
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.cna-beta.cve.local:9051
+                    peerAddress: peer0.cna-beta.cve.local:9051
+          - organization:
+              name: regulator
+              type: joiner
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.regulator.cve.local:11051
+                    peerAddress: peer0.regulator.cve.local:11051
+        endorsers:
+          name:
+            - cnaalpha
+            - cnabeta
+            - regulator
+        genesis:
+          name: OrdererGenesis
+
+    - channel:
+        channel_name: cveconsortium
+        consortium: CVEConsortium
+        orderers:
+          - orderer0
+        participants:
+          - organization:
+              name: cnaalpha
+              type: creator
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.cna-alpha.cve.local:7051
+                    peerAddress: peer0.cna-alpha.cve.local:7051
+          - organization:
+              name: cnabeta
+              type: joiner
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.cna-beta.cve.local:9051
+                    peerAddress: peer0.cna-beta.cve.local:9051
+          - organization:
+              name: regulator
+              type: joiner
+              org_status: new
+              peers:
+                - peer:
+                    name: peer0
+                    gossipAddress: peer0.regulator.cve.local:11051
+                    peerAddress: peer0.regulator.cve.local:11051
+        endorsers:
+          name:
+            - cnaalpha
+            - cnabeta
+            - regulator
+        genesis:
+          name: OrdererGenesis
+
+  # Organizations
+  organizations:
+    # Orderer Organization
+    - organization:
+        name: orderer
+        country: IN
+        state: Gujarat
+        location: Anand
+        subject: "O=Orderer,L=Anand,ST=Gujarat,C=IN"
+        type: orderer
+        external_url_suffix: cve.local
+        cloud_provider: minikube
+        k8s:
+          context: minikube
+          config_file: "~/.kube/config"
+        services:
+          ca:
+            name: ca
+            subject: "/C=IN/ST=Gujarat/L=Anand/O=Orderer"
+            type: ca
+            grpc:
+              port: 7054
+          consensus:
+            name: raft
+          orderers:
+            - orderer:
+                name: orderer0
+                type: orderer
+                consensus: raft
+                grpc:
+                  port: 7050
+                ordererAddress: orderer0.orderer.cve.local:7050
+
+    # CNA-Alpha Organization
+    - organization:
+        name: cnaalpha
+        country: IN
+        state: Gujarat
+        location: Anand
+        subject: "O=CNAAlpha,L=Anand,ST=Gujarat,C=IN"
+        type: peer
+        external_url_suffix: cve.local
+        org_status: new
+        cloud_provider: minikube
+        k8s:
+          context: minikube
+          config_file: "~/.kube/config"
+        services:
+          ca:
+            name: ca
+            subject: "/C=IN/ST=Gujarat/L=Anand/O=CNAAlpha"
+            type: ca
+            grpc:
+              port: 7054
+          peers:
+            - peer:
+                name: peer0
+                type: anchor
+                gossippeeraddress: peer0.cna-alpha.cve.local:7051
+                peerAddress: peer0.cna-alpha.cve.local:7051
+                cli: enabled
+                grpc:
+                  port: 7051
+                events:
+                  port: 7053
+                couchdb:
+                  port: 5984
+                  username: cnaalphaadmin
+                  password: cnaalphaadminpw
+
+    # CNA-Beta Organization
+    - organization:
+        name: cnabeta
+        country: IN
+        state: Gujarat
+        location: Anand
+        subject: "O=CNABeta,L=Anand,ST=Gujarat,C=IN"
+        type: peer
+        external_url_suffix: cve.local
+        org_status: new
+        cloud_provider: minikube
+        k8s:
+          context: minikube
+          config_file: "~/.kube/config"
+        services:
+          ca:
+            name: ca
+            subject: "/C=IN/ST=Gujarat/L=Anand/O=CNABeta"
+            type: ca
+            grpc:
+              port: 7054
+          peers:
+            - peer:
+                name: peer0
+                type: anchor
+                gossippeeraddress: peer0.cna-beta.cve.local:9051
+                peerAddress: peer0.cna-beta.cve.local:9051
+                cli: disabled
+                grpc:
+                  port: 9051
+                events:
+                  port: 9053
+                couchdb:
+                  port: 7984
+                  username: cnabetaadmin
+                  password: cnabetaadminpw
+
+    # Regulator Organization (National Body)
+    - organization:
+        name: regulator
+        country: IN
+        state: Gujarat
+        location: Anand
+        subject: "O=Regulator,L=Anand,ST=Gujarat,C=IN"
+        type: peer
+        external_url_suffix: cve.local
+        org_status: new
+        cloud_provider: minikube
+        k8s:
+          context: minikube
+          config_file: "~/.kube/config"
+        services:
+          ca:
+            name: ca
+            subject: "/C=IN/ST=Gujarat/L=Anand/O=Regulator"
+            type: ca
+            grpc:
+              port: 7054
+          peers:
+            - peer:
+                name: peer0
+                type: anchor
+                gossippeeraddress: peer0.regulator.cve.local:11051
+                peerAddress: peer0.regulator.cve.local:11051
+                cli: disabled
+                grpc:
+                  port: 11051
+                events:
+                  port: 11053
+                couchdb:
+                  port: 9984
+                  username: regulatoradmin
+                  password: regulatoradminpw

@@ -1,0 +1,8 @@
+{
+  "index": {
+    "fields": ["docType", "createdAt"]
+  },
+  "ddoc": "indexProposalDoc",
+  "name": "indexProposal",
+  "type": "json"
+}

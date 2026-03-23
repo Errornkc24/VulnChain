@@ -1,0 +1,100 @@
+# Bevel fabric-peernode chart — Regulator peer0
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    address: ""
+    authPath: regulator
+    secretEngine: secretsv2
+    secretPrefix: "data/regulator"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+    port: 443
+
+storage:
+  enabled: true
+  peer: 512Mi
+  couchdb: 512Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+certs:
+  generateCertificates: false
+  orgData:
+    caAddress: ca-regulator.regulator-ns:7054
+    caAdminUser: regulator-admin
+    caAdminPassword: regulator-adminpw
+    orgName: regulator
+    type: peer
+    componentSubject: "O=Regulator,L=Ahmedabad,C=IN"
+  settings:
+    createConfigMaps: true
+    refreshCertValue: false
+    addPeerValue: false
+    removeCertsOnDelete: false
+    removeOrdererTlsOnDelete: false
+
+image:
+  couchdb: couchdb:3.3
+  peer: ghcr.io/hyperledger/bevel-fabric-peer
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  pullSecret:
+
+peer:
+  gossipPeerAddress: peer0-regulator.regulator-ns:11051
+  logLevel: info
+  localMspId: RegulatorMSP
+  tlsStatus: true
+  cliEnabled: false
+  ordererAddress: orderer0.orderer-ns:7050
+  builder: hyperledger/fabric-ccenv
+  couchdb:
+    username: regulatoradmin
+    password: regulatoradminpw
+  mspConfig:
+    organizationalUnitIdentifiers:
+    nodeOUs:
+      clientOUIdentifier: client
+      peerOUIdentifier: peer
+      adminOUIdentifier: admin
+      ordererOUIdentifier: orderer
+  serviceType: NodePort
+  loadBalancerType: ""
+  ports:
+    grpc:
+      nodePort: 31051
+      clusterIpPort: 11051
+    events:
+      nodePort: 31052
+      clusterIpPort: 11053
+    couchdb:
+      nodePort: 31084
+      clusterIpPort: 5984
+    metrics:
+      enabled: false
+      clusterIpPort: 9443
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1
+    requests:
+      memory: 512M
+      cpu: 0.25
+  upgrade: false
+  healthCheck:
+    retries: 20
+    sleepTimeAfterError: 15
+
+labels:
+  service: []
+  pvc: []
+  deployment: []

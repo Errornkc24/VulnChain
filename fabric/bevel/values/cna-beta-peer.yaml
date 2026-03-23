@@ -1,0 +1,100 @@
+# Bevel fabric-peernode chart — CNA Beta peer0
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    address: ""
+    authPath: cna-beta
+    secretEngine: secretsv2
+    secretPrefix: "data/cna-beta"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+    port: 443
+
+storage:
+  enabled: true
+  peer: 512Mi
+  couchdb: 512Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+certs:
+  generateCertificates: false
+  orgData:
+    caAddress: ca-cna-beta.cna-beta-ns:7054
+    caAdminUser: cna-beta-admin
+    caAdminPassword: cna-beta-adminpw
+    orgName: cna-beta
+    type: peer
+    componentSubject: "O=CNABeta,L=Ahmedabad,C=IN"
+  settings:
+    createConfigMaps: true
+    refreshCertValue: false
+    addPeerValue: false
+    removeCertsOnDelete: false
+    removeOrdererTlsOnDelete: false
+
+image:
+  couchdb: couchdb:3.3
+  peer: ghcr.io/hyperledger/bevel-fabric-peer
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  pullSecret:
+
+peer:
+  gossipPeerAddress: peer0-cna-beta.cna-beta-ns:9051
+  logLevel: info
+  localMspId: CNABetaMSP
+  tlsStatus: true
+  cliEnabled: false
+  ordererAddress: orderer0.orderer-ns:7050
+  builder: hyperledger/fabric-ccenv
+  couchdb:
+    username: cnabetaadmin
+    password: cnabetaadminpw
+  mspConfig:
+    organizationalUnitIdentifiers:
+    nodeOUs:
+      clientOUIdentifier: client
+      peerOUIdentifier: peer
+      adminOUIdentifier: admin
+      ordererOUIdentifier: orderer
+  serviceType: NodePort
+  loadBalancerType: ""
+  ports:
+    grpc:
+      nodePort: 30951
+      clusterIpPort: 9051
+    events:
+      nodePort: 30952
+      clusterIpPort: 9053
+    couchdb:
+      nodePort: 30984
+      clusterIpPort: 5984
+    metrics:
+      enabled: false
+      clusterIpPort: 9443
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1
+    requests:
+      memory: 512M
+      cpu: 0.25
+  upgrade: false
+  healthCheck:
+    retries: 20
+    sleepTimeAfterError: 15
+
+labels:
+  service: []
+  pvc: []
+  deployment: []

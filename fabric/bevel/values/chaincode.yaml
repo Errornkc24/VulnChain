@@ -1,0 +1,46 @@
+# Bevel fabric-chaincode-install chart
+# Source: bevel/platforms/hyperledger-fabric/charts/fabric-chaincode-install
+# NOTE: This chart uses the older Bevel schema (metadata/vault at top level)
+metadata:
+  network:
+    version: 2.5.4
+  namespace: cna-alpha-ns
+  images:
+    fabrictools: ghcr.io/hyperledger/bevel-fabric-tools:2.5.4
+    alpineutils: ghcr.io/hyperledger/bevel-alpine:latest
+  labels:
+
+peer:
+  name: peer0
+  address: peer0-cna-alpha.cna-alpha-ns:7051
+  localmspid: CNAAlphaMSP
+  loglevel: info
+  tlsstatus: true
+
+vault:
+  role: vault-role
+  address: ""
+  authpath: cna-alpha
+  adminsecretprefix: secretsv2/data/crypto/peerOrganizations/cna-alpha/users/admin
+  orderersecretprefix: secretsv2/data/crypto/peerOrganizations/cna-alpha/orderer
+  secretgitprivatekey: ""
+  serviceaccountname: bevel-auth
+  type: kubernetes  # Use K8s secrets, no HashiCorp Vault
+  imagesecretname: ""
+  tls:
+
+orderer:
+  address: orderer0.orderer-ns:7050
+
+chaincode:
+  builder: hyperledger/fabric-ccenv:2.5.4
+  name: cve-chaincode
+  version: "1"
+  lang: golang
+  maindirectory: ""
+  repository:
+    hostname: "github.com"
+    url: "github.com/cve-platform/chaincode"
+    branch: main
+    path: "."
+    git_username: ""

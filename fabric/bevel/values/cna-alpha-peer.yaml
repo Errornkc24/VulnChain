@@ -1,0 +1,101 @@
+# Bevel fabric-peernode chart — CNA Alpha peer0
+# Source: bevel/platforms/hyperledger-fabric/charts/fabric-peernode
+global:
+  version: 2.5.4
+  serviceAccountName: bevel-auth
+  cluster:
+    provider: minikube
+    cloudNativeServices: false
+  vault:
+    type: kubernetes
+    role: vault-role
+    address: ""
+    authPath: cna-alpha
+    secretEngine: secretsv2
+    secretPrefix: "data/cna-alpha"
+    tls: false
+  proxy:
+    provider: none
+    externalUrlSuffix: cve.local
+    port: 443
+
+storage:
+  enabled: true
+  peer: 512Mi
+  couchdb: 512Mi
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowedTopologies:
+    enabled: false
+
+certs:
+  generateCertificates: false  # Certs generated externally via cryptogen
+  orgData:
+    caAddress: ca-cna-alpha.cna-alpha-ns:7054
+    caAdminUser: cna-alpha-admin
+    caAdminPassword: cna-alpha-adminpw
+    orgName: cna-alpha
+    type: peer
+    componentSubject: "O=CNAAlpha,L=Ahmedabad,C=IN"
+  settings:
+    createConfigMaps: true
+    refreshCertValue: false
+    addPeerValue: false
+    removeCertsOnDelete: false
+    removeOrdererTlsOnDelete: false
+
+image:
+  couchdb: couchdb:3.3
+  peer: ghcr.io/hyperledger/bevel-fabric-peer
+  alpineUtils: ghcr.io/hyperledger/bevel-alpine:latest
+  pullSecret:
+
+peer:
+  gossipPeerAddress: peer0-cna-alpha.cna-alpha-ns:7051
+  logLevel: info
+  localMspId: CNAAlphaMSP
+  tlsStatus: true
+  cliEnabled: false
+  ordererAddress: orderer0.orderer-ns:7050
+  builder: hyperledger/fabric-ccenv
+  couchdb:
+    username: cnaalphaadmin
+    password: cnaalphaadminpw
+  mspConfig:
+    organizationalUnitIdentifiers:
+    nodeOUs:
+      clientOUIdentifier: client
+      peerOUIdentifier: peer
+      adminOUIdentifier: admin
+      ordererOUIdentifier: orderer
+  serviceType: NodePort
+  loadBalancerType: ""
+  ports:
+    grpc:
+      nodePort: 30051
+      clusterIpPort: 7051
+    events:
+      nodePort: 30052
+      clusterIpPort: 7053
+    couchdb:
+      nodePort: 30084
+      clusterIpPort: 5984
+    metrics:
+      enabled: false
+      clusterIpPort: 9443
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1
+    requests:
+      memory: 512M
+      cpu: 0.25
+  upgrade: false
+  healthCheck:
+    retries: 20
+    sleepTimeAfterError: 15
+
+labels:
+  service: []
+  pvc: []
+  deployment: []
