@@ -25,6 +25,12 @@ BEVEL_GIT_BRANCH="main"
 export PATH="${BIN_DIR}:${PATH}"
 export FABRIC_CFG_PATH="${NETWORK_DIR}/configtx"
 
+# Force both kubectl and helm to use the minikube kubeconfig.
+# The system kubectl on this machine defaults to k3s (/etc/rancher/k3s/k3s.yaml),
+# which is a different cluster than minikube. Setting KUBECONFIG explicitly ensures
+# all kubectl/helm calls in this script target the same minikube cluster.
+export KUBECONFIG="$HOME/.kube/config"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -114,8 +120,17 @@ patch_bevel_charts() {
     fi
 
     # ── Fix 3: StorageClass — encrypted param not supported by minikube hostpath
-    if grep -q 'encrypted:' "$SC_VALUES" 2>/dev/null; then
-        sed -i 's/minikube:.*/minikube: {}/g' "$SC_VALUES"
+    #    Replace the minikube block (key + any indented children) with an empty map.
+    if grep -q 'minikube:' "$SC_VALUES" 2>/dev/null; then
+        python3 - "$SC_VALUES" <<'PYEOF'
+import sys, re
+path = sys.argv[1]
+text = open(path).read()
+# Replace "  minikube:\n    encrypted: ..." with "  minikube: {}"
+text = re.sub(r'([ \t]*minikube:)[^\n]*\n(?:[ \t]+\S[^\n]*\n)*',
+              r'\1 {}\n', text)
+open(path, 'w').write(text)
+PYEOF
         info "  ✓ Fixed StorageClass encrypted param"
     fi
 
