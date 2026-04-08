@@ -33,7 +33,7 @@ export default function Analytics() {
 
   if (loading) return <Loading />
 
-  const total = summary?.statusCounts ? Object.values(summary.statusCounts).reduce((a, b) => a + b, 0) : 0
+  const total = summary?.statusCounts?.total || (summary?.statusCounts ? Object.entries(summary.statusCounts).filter(([k]) => k !== 'total').reduce((a, [, v]) => a + v, 0) : 0)
   const critical = summary?.severityCounts?.CRITICAL || 0
   const published = summary?.statusCounts?.published || 0
   const embargoed = summary?.statusCounts?.embargoed || 0
